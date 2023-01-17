@@ -54,7 +54,6 @@ CCore::CCore(void) {
 	mainEvent = new SDL_Event();
 
     this->controller = new Controller(mainEvent);
-	// ----- ICO
 	
 	Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
 	
@@ -168,6 +167,7 @@ void CCore::InputMenu() {
 				}
 				break;
 		}
+        return;
 	}
 
 	if(this->controller->isKeyUp()) {
@@ -335,7 +335,7 @@ void CCore::MouseInput() {
 		}
 		case SDL_MOUSEWHEEL:
 			if(mainEvent->wheel.timestamp > SDL_GetTicks() - 2) {
-				//CCFG::getMM()->getLE()->mouseWheel(mainEvent->wheel.y);
+				CCFG::getMM()->getLE()->mouseWheel(mainEvent->wheel.y);
 			}
 			break;
 	}

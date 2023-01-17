@@ -22,8 +22,8 @@ private:
 	AboutMenu* oAboutMenu;
 	OptionsMenu* oOptionsMenu;
 	PauseMenu* oPauseMenu;
-	//Console* oConsole;
-	//LevelEditor* oLE;
+	Console* oConsole;
+	LevelEditor* oLE;
 
 public:
 	MenuManager(void);
@@ -36,7 +36,7 @@ public:
 		eAbout,
 		eOptions,
 		ePasue,
-		//eLevelEditor,
+		eLevelEditor,
 	};
 
 	gameState currentGameState;
@@ -62,8 +62,8 @@ public:
 	LoadingMenu* getLoadingMenu();
 	AboutMenu* getAboutMenu();
 
-	//Console* getConsole();
-	//LevelEditor* getLE();
+	Console* getConsole();
+	LevelEditor* getLE();
 	OptionsMenu* getOptions();
 };
 

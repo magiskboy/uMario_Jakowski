@@ -9,9 +9,9 @@ MenuManager::MenuManager(void) {
 	this->oMainMenu = new MainMenu();
 	this->oLoadingMenu = new LoadingMenu();
 	this->oAboutMenu = new AboutMenu();
-	//this->oConsole = new Console();
+	this->oConsole = new Console();
 	this->oOptionsMenu = new OptionsMenu();
-	//this->oLE = new LevelEditor();
+	this->oLE = new LevelEditor();
 	this->oPauseMenu = new PauseMenu();
 }
 
@@ -223,7 +223,7 @@ LoadingMenu* MenuManager::getLoadingMenu() {
 AboutMenu* MenuManager::getAboutMenu() {
 	return oAboutMenu;
 }
-/*
+
 Console* MenuManager::getConsole() {
 	return oConsole;
 }
@@ -231,7 +231,7 @@ Console* MenuManager::getConsole() {
 LevelEditor* MenuManager::getLE() {
 	return oLE;
 }
-*/
+
 OptionsMenu* MenuManager::getOptions() {
 	return oOptionsMenu;
 }

@@ -62,9 +62,13 @@ CONTROLLER_EVENT getEventFromGameController(SDL_Event* event) {
 CONTROLLER_EVENT getEventFromKeyboard(SDL_Event* event) {
     SDL_Keycode key_code = event->key.keysym.sym;
 
-    if (key_code == CCFG::keyIDA) return BUTTON_LEFT;
-    if (key_code == CCFG::keyIDS) return BUTTON_DOWN;
-    if (key_code == CCFG::keyIDD) return BUTTON_RIGHT;
+    if (key_code == CCFG::keyIDA || key_code == SDLK_LEFT) return BUTTON_LEFT;
+    if (key_code == CCFG::keyIDS || key_code == SDLK_DOWN) return BUTTON_DOWN;
+    if (key_code == CCFG::keyIDD || key_code == SDLK_RIGHT) return BUTTON_RIGHT;
+    if (key_code == SDLK_w || key_code == SDLK_UP) return BUTTON_UP;
+
+    if (key_code == SDLK_RETURN) return BUTTON_START;
+    if (key_code == SDLK_ESCAPE) return BUTTON_BACK;
 
     if (key_code == CCFG::keyIDShift) return BUTTON_A;
     if (key_code == CCFG::keyIDSpace) return BUTTON_B;
