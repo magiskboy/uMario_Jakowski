@@ -1,4 +1,5 @@
 #include "CFG.h"
+#include <iostream>
 
 /* ******************************************** */
 
@@ -28,6 +29,8 @@ int CCFG::keyIDD = 0;
 int CCFG::keyIDS = 0;
 int CCFG::keyIDSpace = 0;
 int CCFG::keyIDShift = 0;
+SDL_Joystick* CCFG::gJoyStick = NULL;
+SDL_GameController* CCFG::gGameController = NULL;
 
 bool CCFG::canMoveBackward = true;
 

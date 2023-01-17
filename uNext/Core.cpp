@@ -4,6 +4,17 @@
 #include "CFG.h"
 #include "Text.h"
 #include "SDL_mixer.h"
+#include <iostream>
+#include <stdio.h>
+
+enum KEY_CODE {
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT,
+    ENTER,
+    ESCAPE,
+};
 
 /* ******************************************** */
 
@@ -30,7 +41,21 @@ CCore::CCore(void) {
 	this->iNumOfFPS = 0;
 	this->lFPSTime = 0;
 
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
+
+    if( SDL_NumJoysticks() < 1 ) {
+        std::cout << "Warning: No joysticks connected!" << std::endl;
+    }
+    else {
+        //Load joystick
+        CCFG::gJoyStick = SDL_JoystickOpen( 0 );
+        CCFG::gGameController = SDL_GameControllerOpen( 0 );
+        if( CCFG::gGameController == NULL )
+        {
+            std::cout << "Warning: Unable to open game controller! SDL Error: " << SDL_GetError() << std::endl;
+        }
+        std::cout << "Load controller success" << std::endl;
+    }
 	
 	window = SDL_CreateWindow("uMario - www.LukaszJakowski.pl", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, CCFG::GAME_WIDTH, CCFG::GAME_HEIGHT, SDL_WINDOW_SHOWN);
 
@@ -77,6 +102,7 @@ CCore::~CCore(void) {
 	delete mainEvent;
 	SDL_DestroyRenderer(rR);
 	SDL_DestroyWindow(window);
+    SDL_JoystickClose(CCFG::gJoyStick);
 }
 
 /* ******************************************** */
@@ -131,41 +157,94 @@ void CCore::Input() {
 }
 
 void CCore::InputMenu() {
-	if(mainEvent->type == SDL_KEYDOWN) {
+	if(mainEvent->type == SDL_KEYDOWN || mainEvent->type == SDL_CONTROLLERBUTTONDOWN) {
 		CCFG::getMM()->setKey(mainEvent->key.keysym.sym);
+        enum KEY_CODE code = UP;
 
-		switch(mainEvent->key.keysym.sym) {
-			case SDLK_s: case SDLK_DOWN:
+        if (mainEvent->type == SDL_CONTROLLERBUTTONDOWN) {
+            switch (mainEvent->cbutton.button) {
+                case SDL_CONTROLLER_BUTTON_DPAD_UP:
+                    code = UP;
+                    break;
+                case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                    code = DOWN;
+                    break;
+                case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+                    code = LEFT;
+                    break;
+                case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+                    code = RIGHT;
+                    break;
+                case SDL_CONTROLLER_BUTTON_START:
+                    code = ENTER;
+                    break;
+                case SDL_CONTROLLER_BUTTON_BACK:
+                    code = ESCAPE;
+                    break;
+            }
+        }
+        else {
+            switch(mainEvent->key.keysym.sym) {
+                case SDLK_s: case SDLK_DOWN:
+                    code = DOWN;
+                    break;
+                case SDLK_w: case SDLK_UP: 
+                    code = UP;
+                    break;
+                case SDLK_KP_ENTER: case SDLK_RETURN:
+                    code = ENTER;
+                    break;
+                case SDLK_ESCAPE:
+                    code = ESCAPE;
+                    break;
+                case SDLK_LEFT: case SDLK_d:
+                    code = LEFT;
+                    break;
+                case SDLK_RIGHT: case SDLK_a:
+                    code = RIGHT;
+                    break;
+            }
+
+        }
+
+		switch(code) {
+            case DOWN:
+                std::cout << "DOWN" << std::endl;
 				if(!keyMenuPressed) {
 					CCFG::getMM()->keyPressed(2);
 					keyMenuPressed = true;
 				}
 				break;
-			case SDLK_w: case SDLK_UP:
+            case UP: 
+                std::cout << "UP" << std::endl;
 				if(!keyMenuPressed) {
 					CCFG::getMM()->keyPressed(0);
 					keyMenuPressed = true;
 				}
 				break;
-			case SDLK_KP_ENTER: case SDLK_RETURN:
+			case ENTER:
+                std::cout << "ENTER" << std::endl;
 				if(!keyMenuPressed) {
 					CCFG::getMM()->enter();
 					keyMenuPressed = true;
 				}
 				break;
-			case SDLK_ESCAPE:
+			case ESCAPE:
+                std::cout << "ESCAPE" << std::endl;
 				if(!keyMenuPressed) {
 					CCFG::getMM()->escape();
 					keyMenuPressed = true;
 				}
 				break;
-			case SDLK_LEFT: case SDLK_d:
+            case LEFT:
+                std::cout << "LEFT" << std::endl;
 				if(!keyMenuPressed) {
 					CCFG::getMM()->keyPressed(3);
 					keyMenuPressed = true;
 				}
 				break;
-			case SDLK_RIGHT: case SDLK_a:
+            case RIGHT:
+                std::cout << "RIGHT" << std::endl;
 				if(!keyMenuPressed) {
 					CCFG::getMM()->keyPressed(1);
 					keyMenuPressed = true;
@@ -182,7 +261,9 @@ void CCore::InputMenu() {
 			default:
 				break;
 		}
-	}
+    } else if (mainEvent->type == SDL_CONTROLLERBUTTONUP) {
+        keyMenuPressed = false;
+    }
 }
 
 void CCore::InputPlayer() {
@@ -197,38 +278,38 @@ void CCore::InputPlayer() {
 		}
 	}
 
-	if(mainEvent->type == SDL_KEYUP) {
-		if(mainEvent->key.keysym.sym == CCFG::keyIDD) {
-				if(firstDir) {
-					firstDir = false;
-				}
+	if(mainEvent->type == SDL_KEYUP || mainEvent->type == SDL_CONTROLLERBUTTONUP) {
+		if(mainEvent->key.keysym.sym == CCFG::keyIDD || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) {
+            if(firstDir) {
+                firstDir = false;
+            }
 
-				keyDPressed = false;
-			}
+            keyDPressed = false;
+        }
 
-			if(mainEvent->key.keysym.sym == CCFG::keyIDS) {
-				oMap->getPlayer()->setSquat(false);
-				keyS = false;
-			}
+        if(mainEvent->key.keysym.sym == CCFG::keyIDS || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN) {
+            oMap->getPlayer()->setSquat(false);
+            keyS = false;
+        }
 		
-			if(mainEvent->key.keysym.sym == CCFG::keyIDA) {
-				if(!firstDir) {
-					firstDir = true;
-				}
+        if(mainEvent->key.keysym.sym == CCFG::keyIDA || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT) {
+            if(!firstDir) {
+                firstDir = true;
+            }
 
-				keyAPressed = false;
-			}
+            keyAPressed = false;
+        }
 		
-			if(mainEvent->key.keysym.sym == CCFG::keyIDSpace) {
-				CCFG::keySpace = false;
-			}
-		
-			if(mainEvent->key.keysym.sym == CCFG::keyIDShift) {
-				if(keyShift) {
-					oMap->getPlayer()->resetRun();
-					keyShift = false;
-				}
-			}
+        if(mainEvent->key.keysym.sym == CCFG::keyIDSpace || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_X) {
+            CCFG::keySpace = false;
+        }
+    
+        if(mainEvent->key.keysym.sym == CCFG::keyIDShift) {
+            if(keyShift) {
+                oMap->getPlayer()->resetRun();
+                keyShift = false;
+            }
+        }
 		switch(mainEvent->key.keysym.sym) {
 			case SDLK_KP_ENTER: case SDLK_RETURN: case SDLK_ESCAPE:
 				keyMenuPressed = false;
@@ -236,36 +317,36 @@ void CCore::InputPlayer() {
 		}
 	}
 
-	if(mainEvent->type == SDL_KEYDOWN) {
-		if(mainEvent->key.keysym.sym == CCFG::keyIDD) {
+	if(mainEvent->type == SDL_KEYDOWN || mainEvent->type == SDL_CONTROLLERBUTTONDOWN) {
+		if(mainEvent->key.keysym.sym == CCFG::keyIDD || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) {
 			keyDPressed = true;
 			if(!keyAPressed) {
 				firstDir = true;
 			}
 		}
 
-		if(mainEvent->key.keysym.sym == CCFG::keyIDS) {
+		if(mainEvent->key.keysym.sym == CCFG::keyIDS || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN) {
 			if(!keyS) {
 				keyS = true;
 				if(!oMap->getUnderWater() && !oMap->getPlayer()->getInLevelAnimation()) oMap->getPlayer()->setSquat(true);
 			}
 		}
 		
-		if(mainEvent->key.keysym.sym == CCFG::keyIDA) {
+		if(mainEvent->key.keysym.sym == CCFG::keyIDA || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT) {
 			keyAPressed = true;
 			if(!keyDPressed) {
 				firstDir = false;
 			}
 		}
 		
-		if(mainEvent->key.keysym.sym == CCFG::keyIDSpace) {
+		if(mainEvent->key.keysym.sym == CCFG::keyIDSpace || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_X) {
 			if(!CCFG::keySpace) {
 				oMap->getPlayer()->jump();
 				CCFG::keySpace = true;
 			}
 		}
 		
-		if(mainEvent->key.keysym.sym == CCFG::keyIDShift) {
+		if(mainEvent->key.keysym.sym == CCFG::keyIDShift || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_A) {
 			if(!keyShift) {
 				oMap->getPlayer()->startRun();
 				keyShift = true;
@@ -273,12 +354,12 @@ void CCore::InputPlayer() {
 		}
 
 		switch(mainEvent->key.keysym.sym) {
-			case SDLK_KP_ENTER: case SDLK_RETURN:
+            case SDLK_KP_ENTER: case SDLK_RETURN: case SDL_CONTROLLER_BUTTON_START:
 				if(!keyMenuPressed) {
 					CCFG::getMM()->enter();
 					keyMenuPressed = true;
 				}
-			case SDLK_ESCAPE:
+            case SDLK_ESCAPE: case SDL_CONTROLLER_BUTTON_BACK:
 				if(!keyMenuPressed && CCFG::getMM()->getViewID() == CCFG::getMM()->eGame) {
 					CCFG::getMM()->resetActiveOptionID(CCFG::getMM()->ePasue);
 					CCFG::getMM()->setViewID(CCFG::getMM()->ePasue);
