@@ -4,6 +4,7 @@
 #define CORE_H
 
 #include "Map.h"
+#include "Controller.h"
 
 class CCore
 {
@@ -11,6 +12,7 @@ private:
 	SDL_Window* window;
 	SDL_Renderer* rR;
 	SDL_Event* mainEvent;
+    Controller* controller;
 
 	// ----- FPS -----
 
@@ -58,6 +60,8 @@ public:
 	
 	/* ----- get & set ----- */
 	static Map* getMap();
+    
+    Controller* getController();
 };
 
 #endif

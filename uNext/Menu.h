@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef MENU_H
-#define MENU_h
+#define MENU_H
 
 #include "header.h"
 #include "MenuOption.h"

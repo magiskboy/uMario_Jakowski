@@ -1,20 +1,12 @@
+#include "Controller.h"
 #include "header.h"
 #include "Core.h"
 #include "IMG.h"
 #include "CFG.h"
 #include "Text.h"
-#include "SDL_mixer.h"
+#include <SDL2/SDL_mixer.h>
 #include <iostream>
 #include <stdio.h>
-
-enum KEY_CODE {
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT,
-    ENTER,
-    ESCAPE,
-};
 
 /* ******************************************** */
 
@@ -42,20 +34,6 @@ CCore::CCore(void) {
 	this->lFPSTime = 0;
 
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
-
-    if( SDL_NumJoysticks() < 1 ) {
-        std::cout << "Warning: No joysticks connected!" << std::endl;
-    }
-    else {
-        //Load joystick
-        CCFG::gJoyStick = SDL_JoystickOpen( 0 );
-        CCFG::gGameController = SDL_GameControllerOpen( 0 );
-        if( CCFG::gGameController == NULL )
-        {
-            std::cout << "Warning: Unable to open game controller! SDL Error: " << SDL_GetError() << std::endl;
-        }
-        std::cout << "Load controller success" << std::endl;
-    }
 	
 	window = SDL_CreateWindow("uMario - www.LukaszJakowski.pl", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, CCFG::GAME_WIDTH, CCFG::GAME_HEIGHT, SDL_WINDOW_SHOWN);
 
@@ -74,6 +52,8 @@ CCore::CCore(void) {
 	SDL_FreeSurface(loadedSurface);
 
 	mainEvent = new SDL_Event();
+
+    this->controller = new Controller(mainEvent);
 	// ----- ICO
 	
 	Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
@@ -123,16 +103,6 @@ void CCore::mainLoop() {
 		Update();
 		Draw();
 
-		/*CCFG::getText()->Draw(rR, "FPS:" + std::to_string(iNumOfFPS), CCFG::GAME_WIDTH - CCFG::getText()->getTextWidth("FPS:" + std::to_string(iNumOfFPS), 8) - 8, 5, 8);
-
-		if(SDL_GetTicks() - 1000 >= lFPSTime) {
-			lFPSTime = SDL_GetTicks();
-			iNumOfFPS = iFPS;
-			iFPS = 0;
-		}
-
-		++iFPS;*/
-
 		SDL_RenderPresent(rR);
 		
 		if(SDL_GetTicks() - frameTime < MIN_FRAME_TIME) {
@@ -157,94 +127,41 @@ void CCore::Input() {
 }
 
 void CCore::InputMenu() {
-	if(mainEvent->type == SDL_KEYDOWN || mainEvent->type == SDL_CONTROLLERBUTTONDOWN) {
+	if(this->controller->isKeyDown()) {
 		CCFG::getMM()->setKey(mainEvent->key.keysym.sym);
-        enum KEY_CODE code = UP;
 
-        if (mainEvent->type == SDL_CONTROLLERBUTTONDOWN) {
-            switch (mainEvent->cbutton.button) {
-                case SDL_CONTROLLER_BUTTON_DPAD_UP:
-                    code = UP;
-                    break;
-                case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
-                    code = DOWN;
-                    break;
-                case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
-                    code = LEFT;
-                    break;
-                case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
-                    code = RIGHT;
-                    break;
-                case SDL_CONTROLLER_BUTTON_START:
-                    code = ENTER;
-                    break;
-                case SDL_CONTROLLER_BUTTON_BACK:
-                    code = ESCAPE;
-                    break;
-            }
-        }
-        else {
-            switch(mainEvent->key.keysym.sym) {
-                case SDLK_s: case SDLK_DOWN:
-                    code = DOWN;
-                    break;
-                case SDLK_w: case SDLK_UP: 
-                    code = UP;
-                    break;
-                case SDLK_KP_ENTER: case SDLK_RETURN:
-                    code = ENTER;
-                    break;
-                case SDLK_ESCAPE:
-                    code = ESCAPE;
-                    break;
-                case SDLK_LEFT: case SDLK_d:
-                    code = LEFT;
-                    break;
-                case SDLK_RIGHT: case SDLK_a:
-                    code = RIGHT;
-                    break;
-            }
-
-        }
-
-		switch(code) {
-            case DOWN:
-                std::cout << "DOWN" << std::endl;
+		switch(this->controller->getKeyDown()) {
+            case BUTTON_DOWN:
 				if(!keyMenuPressed) {
 					CCFG::getMM()->keyPressed(2);
 					keyMenuPressed = true;
 				}
 				break;
-            case UP: 
-                std::cout << "UP" << std::endl;
+            case BUTTON_UP: 
 				if(!keyMenuPressed) {
 					CCFG::getMM()->keyPressed(0);
 					keyMenuPressed = true;
 				}
 				break;
-			case ENTER:
-                std::cout << "ENTER" << std::endl;
+			case BUTTON_START:
 				if(!keyMenuPressed) {
 					CCFG::getMM()->enter();
 					keyMenuPressed = true;
 				}
 				break;
-			case ESCAPE:
-                std::cout << "ESCAPE" << std::endl;
+			case BUTTON_BACK:
 				if(!keyMenuPressed) {
 					CCFG::getMM()->escape();
 					keyMenuPressed = true;
 				}
 				break;
-            case LEFT:
-                std::cout << "LEFT" << std::endl;
+            case BUTTON_LEFT:
 				if(!keyMenuPressed) {
 					CCFG::getMM()->keyPressed(3);
 					keyMenuPressed = true;
 				}
 				break;
-            case RIGHT:
-                std::cout << "RIGHT" << std::endl;
+            case BUTTON_RIGHT:
 				if(!keyMenuPressed) {
 					CCFG::getMM()->keyPressed(1);
 					keyMenuPressed = true;
@@ -253,15 +170,7 @@ void CCore::InputMenu() {
 		}
 	}
 
-	if(mainEvent->type == SDL_KEYUP) {
-		switch(mainEvent->key.keysym.sym) {
-			case SDLK_s: case SDLK_DOWN: case SDLK_w: case SDLK_UP: case SDLK_KP_ENTER: case SDLK_RETURN: case SDLK_ESCAPE: case SDLK_a: case SDLK_RIGHT: case SDLK_LEFT: case SDLK_d:
-				keyMenuPressed = false;
-				break;
-			default:
-				break;
-		}
-    } else if (mainEvent->type == SDL_CONTROLLERBUTTONUP) {
+	if(this->controller->isKeyUp()) {
         keyMenuPressed = false;
     }
 }
@@ -278,8 +187,8 @@ void CCore::InputPlayer() {
 		}
 	}
 
-	if(mainEvent->type == SDL_KEYUP || mainEvent->type == SDL_CONTROLLERBUTTONUP) {
-		if(mainEvent->key.keysym.sym == CCFG::keyIDD || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) {
+	if(this->controller->isKeyUp()) {
+		if(this->controller->getKeyUp() == BUTTON_RIGHT) {
             if(firstDir) {
                 firstDir = false;
             }
@@ -287,12 +196,12 @@ void CCore::InputPlayer() {
             keyDPressed = false;
         }
 
-        if(mainEvent->key.keysym.sym == CCFG::keyIDS || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN) {
+        if(this->controller->getKeyUp() == BUTTON_DOWN) {
             oMap->getPlayer()->setSquat(false);
             keyS = false;
         }
 		
-        if(mainEvent->key.keysym.sym == CCFG::keyIDA || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT) {
+        if(this->controller->getKeyUp() == BUTTON_LEFT) {
             if(!firstDir) {
                 firstDir = true;
             }
@@ -300,75 +209,74 @@ void CCore::InputPlayer() {
             keyAPressed = false;
         }
 		
-        if(mainEvent->key.keysym.sym == CCFG::keyIDSpace || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_X) {
+        if(this->controller->getKeyUp() == BUTTON_B) {
             CCFG::keySpace = false;
         }
     
-        if(mainEvent->key.keysym.sym == CCFG::keyIDShift) {
+        if(this->controller->getKeyUp() == BUTTON_A) {
             if(keyShift) {
                 oMap->getPlayer()->resetRun();
                 keyShift = false;
             }
         }
-		switch(mainEvent->key.keysym.sym) {
-			case SDLK_KP_ENTER: case SDLK_RETURN: case SDLK_ESCAPE:
-				keyMenuPressed = false;
-				break;
-		}
+
+        if (this->controller->getKeyUp() == BUTTON_BACK) keyMenuPressed = false;
 	}
 
-	if(mainEvent->type == SDL_KEYDOWN || mainEvent->type == SDL_CONTROLLERBUTTONDOWN) {
-		if(mainEvent->key.keysym.sym == CCFG::keyIDD || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) {
+	if(this->controller->isKeyDown()) {
+		if(this->controller->getKeyDown() == BUTTON_RIGHT) {
 			keyDPressed = true;
 			if(!keyAPressed) {
 				firstDir = true;
 			}
 		}
 
-		if(mainEvent->key.keysym.sym == CCFG::keyIDS || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN) {
+		if(this->controller->getKeyDown() == BUTTON_DOWN) {
 			if(!keyS) {
 				keyS = true;
 				if(!oMap->getUnderWater() && !oMap->getPlayer()->getInLevelAnimation()) oMap->getPlayer()->setSquat(true);
 			}
 		}
 		
-		if(mainEvent->key.keysym.sym == CCFG::keyIDA || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT) {
+		if(this->controller->getKeyDown() == BUTTON_LEFT) {
 			keyAPressed = true;
 			if(!keyDPressed) {
 				firstDir = false;
 			}
 		}
 		
-		if(mainEvent->key.keysym.sym == CCFG::keyIDSpace || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_X) {
+		if(this->controller->getKeyDown() == BUTTON_B) {
 			if(!CCFG::keySpace) {
 				oMap->getPlayer()->jump();
 				CCFG::keySpace = true;
 			}
 		}
 		
-		if(mainEvent->key.keysym.sym == CCFG::keyIDShift || mainEvent->cbutton.button == SDL_CONTROLLER_BUTTON_A) {
+		if(this->controller->getKeyDown() == BUTTON_A) {
 			if(!keyShift) {
 				oMap->getPlayer()->startRun();
 				keyShift = true;
 			}
 		}
 
-		switch(mainEvent->key.keysym.sym) {
-            case SDLK_KP_ENTER: case SDLK_RETURN: case SDL_CONTROLLER_BUTTON_START:
-				if(!keyMenuPressed) {
-					CCFG::getMM()->enter();
-					keyMenuPressed = true;
-				}
-            case SDLK_ESCAPE: case SDL_CONTROLLER_BUTTON_BACK:
-				if(!keyMenuPressed && CCFG::getMM()->getViewID() == CCFG::getMM()->eGame) {
-					CCFG::getMM()->resetActiveOptionID(CCFG::getMM()->ePasue);
-					CCFG::getMM()->setViewID(CCFG::getMM()->ePasue);
-					CCFG::getMusic()->PlayChunk(CCFG::getMusic()->cPASUE);
-					CCFG::getMusic()->PauseMusic();
-					keyMenuPressed = true;
-				}
-				break;
-		}
+        CONTROLLER_EVENT key_down = this->controller->getKeyDown();
+        if (
+            key_down == BUTTON_START && 
+            !keyMenuPressed
+        ) {
+            CCFG::getMM()->enter();
+            keyMenuPressed = true;
+        }
+        else if (
+            key_down == BUTTON_BACK &&
+            !keyMenuPressed && CCFG::getMM()->getViewID() == CCFG::getMM()->eGame
+        ) {
+            CCFG::getMM()->resetActiveOptionID(CCFG::getMM()->ePasue);
+            CCFG::getMM()->setViewID(CCFG::getMM()->ePasue);
+            CCFG::getMusic()->PlayChunk(CCFG::getMusic()->cPASUE);
+            CCFG::getMusic()->PauseMusic();
+            keyMenuPressed = true;
+        }
 	}
 
 	if(keyAPressed) {
