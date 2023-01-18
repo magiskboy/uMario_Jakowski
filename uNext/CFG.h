@@ -34,10 +34,6 @@ public:
 	static Music* getMusic();
 
 	static bool canMoveBackward;
-
-    static SDL_Joystick* gJoyStick;
-
-    static SDL_GameController* gGameController;
 };
 
 #endif

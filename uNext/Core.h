@@ -25,9 +25,9 @@ private:
 	// ----- FPS -----
 
 	// ----- INPUT
-	static bool movePressed, keyMenuPressed, keyS, keyW, keyA, keyD, keyShift;
+	static bool movePressed, keyMenuPressed, keyDown, keyUp, keyLeft, keyRight, keyButtonA;
 
-	static bool keyAPressed, keyDPressed;
+	static bool keyLeftPressed, keyRightPressed;
 	// ----- true = RIGHT, false = LEFT
 	bool firstDir;
 

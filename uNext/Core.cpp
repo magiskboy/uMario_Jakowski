@@ -19,13 +19,13 @@ bool CCore::quitGame = false;
 
 bool CCore::movePressed = false;
 bool CCore::keyMenuPressed = false;
-bool CCore::keyS = false;
-bool CCore::keyW = false;
-bool CCore::keyA = false;
-bool CCore::keyD = false;
-bool CCore::keyShift = false;
-bool CCore::keyAPressed = false;
-bool CCore::keyDPressed = false;
+bool CCore::keyDown = false;
+bool CCore::keyUp = false;
+bool CCore::keyLeft = false;
+bool CCore::keyRight = false;
+bool CCore::keyButtonA = false;
+bool CCore::keyLeftPressed = false;
+bool CCore::keyRightPressed = false;
 
 CCore::CCore(void) {
 	this->quitGame = false;
@@ -34,12 +34,17 @@ CCore::CCore(void) {
 	this->lFPSTime = 0;
 
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
+
+    SDL_DisplayMode dm;
+    SDL_GetCurrentDisplayMode(0, &dm);
 	
-	window = SDL_CreateWindow("uMario - www.LukaszJakowski.pl", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, CCFG::GAME_WIDTH, CCFG::GAME_HEIGHT, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("uMario - www.LukaszJakowski.pl", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, CCFG::GAME_WIDTH, CCFG::GAME_HEIGHT, SDL_WINDOW_SHOWN| SDL_WINDOW_MAXIMIZED);
 
 	if(window == NULL) {
 		quitGame = true;
 	}
+
+    SDL_SetWindowFullscreen(window, 1);
 
 	rR = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
@@ -63,9 +68,9 @@ CCore::CCore(void) {
 
 	CCFG::getMusic()->PlayMusic();
 
-	this->keyMenuPressed = this->movePressed = this->keyS = this->keyW = this->keyA = this->keyD = this->keyShift = false;
+	this->keyMenuPressed = this->movePressed = this->keyDown = this->keyUp = this->keyLeft = this->keyRight = this->keyButtonA = false;
 
-	this->keyAPressed = this->keyDPressed = this->firstDir = false;
+	this->keyLeftPressed = this->keyRightPressed = this->firstDir = false;
 
 	this->mouseX = this->mouseY = 0;
 
@@ -81,7 +86,6 @@ CCore::~CCore(void) {
 	delete mainEvent;
 	SDL_DestroyRenderer(rR);
 	SDL_DestroyWindow(window);
-    SDL_JoystickClose(CCFG::gJoyStick);
 }
 
 /* ******************************************** */
@@ -193,12 +197,12 @@ void CCore::InputPlayer() {
                 firstDir = false;
             }
 
-            keyDPressed = false;
+            keyRightPressed = false;
         }
 
         if(this->controller->getKeyUp() == BUTTON_DOWN) {
             oMap->getPlayer()->setSquat(false);
-            keyS = false;
+            keyDown = false;
         }
 		
         if(this->controller->getKeyUp() == BUTTON_LEFT) {
@@ -206,7 +210,7 @@ void CCore::InputPlayer() {
                 firstDir = true;
             }
 
-            keyAPressed = false;
+            keyLeftPressed = false;
         }
 		
         if(this->controller->getKeyUp() == BUTTON_B) {
@@ -214,9 +218,9 @@ void CCore::InputPlayer() {
         }
     
         if(this->controller->getKeyUp() == BUTTON_A) {
-            if(keyShift) {
+            if(keyButtonA) {
                 oMap->getPlayer()->resetRun();
-                keyShift = false;
+                keyButtonA = false;
             }
         }
 
@@ -225,22 +229,22 @@ void CCore::InputPlayer() {
 
 	if(this->controller->isKeyDown()) {
 		if(this->controller->getKeyDown() == BUTTON_RIGHT) {
-			keyDPressed = true;
-			if(!keyAPressed) {
+			keyRightPressed = true;
+			if(!keyLeftPressed) {
 				firstDir = true;
 			}
 		}
 
 		if(this->controller->getKeyDown() == BUTTON_DOWN) {
-			if(!keyS) {
-				keyS = true;
+			if(!keyDown) {
+				keyDown = true;
 				if(!oMap->getUnderWater() && !oMap->getPlayer()->getInLevelAnimation()) oMap->getPlayer()->setSquat(true);
 			}
 		}
 		
 		if(this->controller->getKeyDown() == BUTTON_LEFT) {
-			keyAPressed = true;
-			if(!keyDPressed) {
+			keyLeftPressed = true;
+			if(!keyRightPressed) {
 				firstDir = false;
 			}
 		}
@@ -253,9 +257,9 @@ void CCore::InputPlayer() {
 		}
 		
 		if(this->controller->getKeyDown() == BUTTON_A) {
-			if(!keyShift) {
+			if(!keyButtonA) {
 				oMap->getPlayer()->startRun();
-				keyShift = true;
+				keyButtonA = true;
 			}
 		}
 
@@ -279,25 +283,25 @@ void CCore::InputPlayer() {
         }
 	}
 
-	if(keyAPressed) {
+	if(keyLeftPressed) {
 		if(!oMap->getPlayer()->getMove() && firstDir == false && !oMap->getPlayer()->getChangeMoveDirection() && !oMap->getPlayer()->getSquat()) {
 			oMap->getPlayer()->startMove();
 			oMap->getPlayer()->setMoveDirection(false);
-		} else if(!keyDPressed && oMap->getPlayer()->getMoveSpeed() > 0 && firstDir != oMap->getPlayer()->getMoveDirection()) {
+		} else if(!keyRightPressed && oMap->getPlayer()->getMoveSpeed() > 0 && firstDir != oMap->getPlayer()->getMoveDirection()) {
 			oMap->getPlayer()->setChangeMoveDirection();
 		}
 	}
 
-	if(keyDPressed) {
+	if(keyRightPressed) {
 		if(!oMap->getPlayer()->getMove() && firstDir == true && !oMap->getPlayer()->getChangeMoveDirection() && !oMap->getPlayer()->getSquat()) {
 			oMap->getPlayer()->startMove();
 			oMap->getPlayer()->setMoveDirection(true);
-		} else if(!keyAPressed && oMap->getPlayer()->getMoveSpeed() > 0 && firstDir != oMap->getPlayer()->getMoveDirection()) {
+		} else if(!keyLeftPressed && oMap->getPlayer()->getMoveSpeed() > 0 && firstDir != oMap->getPlayer()->getMoveDirection()) {
 			oMap->getPlayer()->setChangeMoveDirection();
 		}
 	}
 
-	if(oMap->getPlayer()->getMove() && !keyAPressed && !keyDPressed) {
+	if(oMap->getPlayer()->getMove() && !keyLeftPressed && !keyRightPressed) {
 		oMap->getPlayer()->resetMove();
 	}
 }
@@ -342,7 +346,7 @@ void CCore::MouseInput() {
 }
 
 void CCore::resetKeys() {
-	movePressed = keyMenuPressed = keyS = keyW = keyA = keyD = CCFG::keySpace = keyShift = keyAPressed = keyDPressed = false;
+	movePressed = keyMenuPressed = keyDown = keyUp = keyLeft = keyRight = CCFG::keySpace = keyButtonA = keyLeftPressed = keyRightPressed = false;
 }
 
 void CCore::Update() {
@@ -357,7 +361,7 @@ void CCore::Draw() {
 /* ******************************************** */
 
 void CCore::resetMove() {
-	this->keyAPressed = this->keyDPressed = false;
+	this->keyLeftPressed = this->keyRightPressed = false;
 }
 
 Map* CCore::getMap() {
