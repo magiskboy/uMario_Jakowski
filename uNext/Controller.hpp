@@ -17,15 +17,14 @@ enum CONTROLLER_EVENT {
 
 class Controller {
     public:
-        Controller(SDL_Event*);
+        Controller(SDL_Event* event);
         ~Controller(void);
 
-        virtual enum CONTROLLER_EVENT getKeyUp();
-        virtual enum CONTROLLER_EVENT getKeyDown();
-        virtual bool isKeyUp();
-        virtual bool isKeyDown();
+        enum CONTROLLER_EVENT getKey();
+        bool isKeyUp();
+        bool isKeyDown();
 
-    private:
+    protected:
         SDL_Event* event;
         SDL_GameController* gGameController;
         SDL_Joystick* gJoyStick;

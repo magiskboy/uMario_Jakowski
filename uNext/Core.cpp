@@ -1,9 +1,10 @@
-#include "Controller.h"
+#include "ControllerManager.hpp"
 #include "header.h"
 #include "Core.h"
 #include "IMG.h"
 #include "CFG.h"
 #include "Text.h"
+#include <SDL2/SDL_events.h>
 #include <SDL2/SDL_mixer.h>
 #include <iostream>
 #include <stdio.h>
@@ -58,7 +59,7 @@ CCore::CCore(void) {
 
 	mainEvent = new SDL_Event();
 
-    this->controller = new Controller(mainEvent);
+    this->controllerManager = new ControllerManager(mainEvent);
 	
 	Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
 	
@@ -130,10 +131,10 @@ void CCore::Input() {
 }
 
 void CCore::InputMenu() {
-	if(this->controller->isKeyDown()) {
+	if(this->controllerManager->getController(0).isKeyDown()) {
 		CCFG::getMM()->setKey(mainEvent->key.keysym.sym);
 
-		switch(this->controller->getKeyDown()) {
+		switch(this->controllerManager->getController(0).getKey()) {
             case BUTTON_DOWN:
 				if(!keyMenuPressed) {
 					CCFG::getMM()->keyPressed(2);
@@ -174,7 +175,7 @@ void CCore::InputMenu() {
         return;
 	}
 
-	if(this->controller->isKeyUp()) {
+	if(this->controllerManager->getController(0).isKeyUp()) {
         keyMenuPressed = false;
     }
 }
@@ -191,8 +192,8 @@ void CCore::InputPlayer() {
 		}
 	}
 
-	if(this->controller->isKeyUp()) {
-		if(this->controller->getKeyUp() == BUTTON_RIGHT) {
+	if(this->controllerManager->getController(0).isKeyUp()) {
+		if(this->controllerManager->getController(0).getKey() == BUTTON_RIGHT) {
             if(firstDir) {
                 firstDir = false;
             }
@@ -200,12 +201,12 @@ void CCore::InputPlayer() {
             keyRightPressed = false;
         }
 
-        if(this->controller->getKeyUp() == BUTTON_DOWN) {
+        if(this->controllerManager->getController(0).getKey() == BUTTON_DOWN) {
             oMap->getPlayer()->setSquat(false);
             keyDown = false;
         }
 		
-        if(this->controller->getKeyUp() == BUTTON_LEFT) {
+        if(this->controllerManager->getController(0).getKey() == BUTTON_LEFT) {
             if(!firstDir) {
                 firstDir = true;
             }
@@ -213,57 +214,57 @@ void CCore::InputPlayer() {
             keyLeftPressed = false;
         }
 		
-        if(this->controller->getKeyUp() == BUTTON_B) {
+        if(this->controllerManager->getController(0).getKey() == BUTTON_B) {
             CCFG::keySpace = false;
         }
     
-        if(this->controller->getKeyUp() == BUTTON_A) {
+        if(this->controllerManager->getController(0).getKey() == BUTTON_A) {
             if(keyButtonA) {
                 oMap->getPlayer()->resetRun();
                 keyButtonA = false;
             }
         }
 
-        if (this->controller->getKeyUp() == BUTTON_BACK) keyMenuPressed = false;
+        if (this->controllerManager->getController(0).getKey() == BUTTON_BACK) keyMenuPressed = false;
 	}
 
-	if(this->controller->isKeyDown()) {
-		if(this->controller->getKeyDown() == BUTTON_RIGHT) {
+	if(this->controllerManager->getController(0).isKeyDown()) {
+		if(this->controllerManager->getController(0).getKey() == BUTTON_RIGHT) {
 			keyRightPressed = true;
 			if(!keyLeftPressed) {
 				firstDir = true;
 			}
 		}
 
-		if(this->controller->getKeyDown() == BUTTON_DOWN) {
+		if(this->controllerManager->getController(0).getKey() == BUTTON_DOWN) {
 			if(!keyDown) {
 				keyDown = true;
 				if(!oMap->getUnderWater() && !oMap->getPlayer()->getInLevelAnimation()) oMap->getPlayer()->setSquat(true);
 			}
 		}
 		
-		if(this->controller->getKeyDown() == BUTTON_LEFT) {
+		if(this->controllerManager->getController(0).getKey() == BUTTON_LEFT) {
 			keyLeftPressed = true;
 			if(!keyRightPressed) {
 				firstDir = false;
 			}
 		}
 		
-		if(this->controller->getKeyDown() == BUTTON_B) {
+		if(this->controllerManager->getController(0).getKey() == BUTTON_B) {
 			if(!CCFG::keySpace) {
 				oMap->getPlayer()->jump();
 				CCFG::keySpace = true;
 			}
 		}
 		
-		if(this->controller->getKeyDown() == BUTTON_A) {
+		if(this->controllerManager->getController(0).getKey() == BUTTON_A) {
 			if(!keyButtonA) {
 				oMap->getPlayer()->startRun();
 				keyButtonA = true;
 			}
 		}
 
-        CONTROLLER_EVENT key_down = this->controller->getKeyDown();
+        CONTROLLER_EVENT key_down = this->controllerManager->getController(0).getKey();
         if (
             key_down == BUTTON_START && 
             !keyMenuPressed
